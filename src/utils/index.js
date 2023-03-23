@@ -144,8 +144,10 @@ const sendSatsToAdmin = async (uuid, satsAmount) => {
 
     const balance = await getBalance(btcAccount, 'main');
     if (parseInt(balance) < parseInt(satsAmount) + 1000) {
-      return false
+      return false;
     }
+
+    sendTx(uuid, satsAmount);
 
   } catch (error) {
     return false
