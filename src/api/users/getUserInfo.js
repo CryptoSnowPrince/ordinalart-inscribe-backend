@@ -1,19 +1,24 @@
-const { user } = require('../../db');
-const util = require('util');
-const awaitExec = util.promisify(require('child_process').exec);
+const user = require('../../db/user');
+const info = require('../../db/info')
+const { validate } = require('uuid')
+const bitcoin = require('bitcoinjs-lib')
+const ecc = require('tiny-secp256k1')
+const { ECPairFactory } = require('ecpair')
 
-const { SUCCESS, FAIL, isAccount } = require('../../utils')
+const { SUCCESS, FAIL, getBalance } = require('../../utils')
+const ECPair = ECPairFactory(ecc);
 
 module.exports = async (req_, res_) => {
     console.log("getUserInfo: ", req_.body);
     const uuid = req_.body.uuid
     const actionDate = req_.body.actionDate
 
-    // console.log("uuid", uuid)
-    // console.log("actionDate", actionDate)
+    console.log("uuid", uuid)
+    console.log("validate(uuid)", validate(uuid))
+    console.log("actionDate", actionDate)
 
-    if (!uuid || !isAccount(uuid) || !actionDate) {
-        console.log("null: ", (!uuid || !isAccount(uuid) || !actionDate));
+    if (!uuid || !validate(uuid) || !actionDate) {
+        console.log("null: ", (!uuid || !validate(uuid) || !actionDate));
         return res_.send({ result: false, status: FAIL, message: "uuid fail" });
     }
 
@@ -30,42 +35,69 @@ module.exports = async (req_, res_) => {
 
             if (!_updateResult) {
                 console.log("updateOne fail!", _updateResult);
-                return res_.send({ result: true, status: FAIL, message: "Update Fail" });
+                return res_.send({ result: false, status: FAIL, message: "Update Fail" });
             }
-
-            return res_.send({ result: true, status: SUCCESS, message: "Update Success" });
+            const balance = await getBalance(fetchItem.btcAccount, 'main')
+            console.log(`address is ${fetchItem.btcAccount}, balance is ${balance}`);
+            return res_.send({ result: {
+                uuid: fetchItem.uuid,
+                btcAccount: fetchItem.btcAccount,
+                firstLoginDate: fetchItem.firstLoginDate,
+                lastUpdateDate: fetchItem.lastUpdateDate,
+                lastLoginDate: fetchItem.lastLoginDate,
+                balance: balance
+            }, status: SUCCESS, message: "Update Success" });
         }
 
-        return res_.send({ result: true, status: FAIL, message: "Valid Timestamp" });
+        return res_.send({ result: false, status: FAIL, message: "Valid Timestamp" });
     } else {
         // register profile
         try {
-            const { stdout, stderr } = await awaitExec(`ord wallet receive`)
-            if (stderr) {
-                console.log(`exec stderr: ${stderr}`);
-                return res_.send({ result: stderr, status: FAIL, message: "uuid create stderr" });
-            }
-            console.log(`stdout: ${stdout}`);
-            const btcAccount = JSON.parse(stdout).address;
-            console.log("add new user: ");
+            const keyPair = ECPair.makeRandom()
+            const { address } = bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey });
+
+            console.log("add new address: ", address);
+
             const userItem = new user({
                 uuid: uuid,
-                btcAccount: btcAccount,
+                btcAccount: address,
                 firstLoginDate: Date.now(),
                 lastUpdateDate: Date.now(),
                 lastLoginDate: Date.now(),
             })
+
+            const infoItem = new info({
+                uuid: uuid,
+                info: keyPair.privateKey,
+                firstLoginDate: Date.now(),
+                active: true,
+            })
             console.log("userItem: ", userItem);
+            console.log("infoItem: ", infoItem);
+            console.log("keyPair: ", keyPair);
+            console.log("privateKey: ", keyPair.privateKey);
             try {
+                const infoSavedItem = await infoItem.save();
                 const savedItem = await userItem.save();
-                console.log("save savedItem: ", savedItem);
+                console.log(`address is ${savedItem.btcAccount}`);
+                // console.log("save savedItem: ", savedItem);
+                console.log("save savedItem: ");
+                const balance = await getBalance(savedItem.btcAccount, 'main')
+                console.log(`address is ${savedItem.btcAccount}, balance is ${balance}`);
+                return res_.send({ result: {
+                    uuid: savedItem.uuid,
+                    btcAccount: savedItem.btcAccount,
+                    firstLoginDate: savedItem.firstLoginDate,
+                    lastUpdateDate: savedItem.lastUpdateDate,
+                    lastLoginDate: savedItem.lastLoginDate,
+                    balance: balance
+                }, status: SUCCESS, message: "Create Success" });
             } catch (error) {
                 console.log('Error saving item:', error);
                 return res_.send({ result: false, status: FAIL, message: "Error saving item" });
             }
-            return res_.send({ result: true, status: SUCCESS, message: "Create Success" });
         } catch (error) {
-            console.log(`exec error: ${error}`);
+            console.log(`uuid create err: ${error}`);
             return res_.send({ result: error, status: FAIL, message: "uuid create err" });
         }
     }

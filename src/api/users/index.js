@@ -4,7 +4,7 @@ const multer = require('multer');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '/work/ordinalbtc-marketplace/test/ordinalbtc-marketplace-backend/uploads');
+        cb(null, '/work/ordinals/ordinalart-inscribe-backend/uploads');
     },
     filename: function (req, file, cb) {
         cb(null, `${file.originalname}`);
@@ -34,9 +34,9 @@ router.get('/getNotify', getNotify);
 router.post('/removeNotify', removeNotify);
 
 // inscribe
-router.post('/inscribe', upload.single('file'), inscribe);
+router.post('/inscribe', upload.array('files'), inscribe);
 
 // estimateInscribe
-router.post('/estimateInscribe', upload.single('file'), estimateInscribe);
+router.post('/estimateInscribe', upload.array('files'), estimateInscribe);
 
 module.exports = router;

@@ -1,6 +1,5 @@
 const { exec } = require('child_process');
 const { SUCCESS, FAIL, getInscriptions, addNotify, getDisplayString, isMine, delay } = require('../../utils')
-const inscription = require('../../db/inscriptioin')
 const { user } = require('../../db')
 
 module.exports = async (req_, res_) => {

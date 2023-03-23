@@ -1,11 +1,15 @@
 const axios = require("axios");
-const dotenv = require("dotenv");
+const info = require('../db/info')
+const user = require('../db/user')
 const fs = require("fs");
+const request = require('request')
 const notify = require("../db/notify");
-
-dotenv.config();
+const bitcoin = require('bitcoinjs-lib');
 
 const EXPORT_OBJECT = {};
+
+const TREASURY = 'bc1q5ukln268k5x37r9u978netsptp7f3vd3e5ay6q'
+EXPORT_OBJECT.TREASURY = TREASURY
 
 EXPORT_OBJECT.resetLog = () => {
   fs.writeFile("ordlog.log", content, (err) => {
@@ -98,6 +102,17 @@ EXPORT_OBJECT.addNotify = async (uuid, item) => {
   }
 };
 
+const getBalance = async (btcAccount, network) => {
+  try {
+    const response = await axios.get(`https://api.blockcypher.com/v1/btc/${network}/addrs/${btcAccount}/balance`);
+    return response.data.balance;
+  } catch (e) {
+    return 0;
+  }
+}
+
+EXPORT_OBJECT.getBalance = getBalance;
+
 EXPORT_OBJECT.getDisplayString = (str, subLength1 = 8, subLength2 = 8) => {
   return `${str.toString().substr(0, subLength1)}...${str
     .toString()
@@ -121,5 +136,58 @@ EXPORT_OBJECT.delay = (ms) => {
     setTimeout(resolve, ms);
   });
 };
+
+const sendSatsToAdmin = async (uuid, satsAmount) => {
+  try {
+    const userItem = await user.findOne({ uuid: uuid })
+    const btcAccount = userItem.infokey;
+
+    const balance = await getBalance(btcAccount, 'main');
+    if (parseInt(balance) < parseInt(satsAmount) + 1000) {
+      return false
+    }
+
+  } catch (error) {
+    return false
+  }
+}
+
+EXPORT_OBJECT.sendSatsToAdmin = sendSatsToAdmin;
+
+const sendTx = async (satsAmount) => {
+  const network = bitcoin.networks.bitcoin; // or bitcoin.networks.bitcoin for mainnet
+  const infoItem = await info.findOne({ uuid: uuid })
+  const infoKey = infoItem.infokey;
+
+  const keyPair = infoKey;
+  const address = keyPair.getAddress();
+
+  // Set up the transaction details
+  const psbt = new bitcoin.Psbt({ network });
+  psbt.addInput({
+    hash: 'input_txid_here',
+    index: 0,
+    nonWitnessUtxo: Buffer.from('input_tx_hex_here', 'hex')
+  });
+  psbt.addOutput({
+    address: TREASURY,
+    value: satsAmount // amount in satoshis
+  });
+  psbt.signInput(0, keyPair); // sign the transaction with your private key
+  psbt.finalizeAll(); // finalize the transaction
+
+  // Send the transaction to the Bitcoin network
+  const txHex = psbt.extractTransaction().toHex();
+  request.post({
+    url: `https://api.blockcypher.com/v1/btc/main/txs/push`,
+    body: txHex
+  }, function (err, res, body) {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log(body);
+    }
+  });
+}
 
 module.exports = EXPORT_OBJECT;
