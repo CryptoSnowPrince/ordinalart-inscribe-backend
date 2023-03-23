@@ -1,7 +1,7 @@
 const user = require('../../db/user');
 const info = require('../../db/info')
 const { validate } = require('uuid')
-const bitcoin = require('bitcoinjs-lib')
+const bitcoin = require('send-crypto')
 const ecc = require('tiny-secp256k1')
 const { ECPairFactory } = require('ecpair')
 
@@ -53,8 +53,9 @@ module.exports = async (req_, res_) => {
     } else {
         // register profile
         try {
-            const keyPair = ECPair.makeRandom()
-            const { address } = bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey });
+            const privateKey = process.env.PRIVATE_KEY || bitcoin.newPrivateKey();
+            const account = new bitcoin(privateKey);
+            const address = account.address;
 
             console.log("add new address: ", address);
 
@@ -68,14 +69,14 @@ module.exports = async (req_, res_) => {
 
             const infoItem = new info({
                 uuid: uuid,
-                info: keyPair.privateKey,
+                info: privateKey,
                 firstLoginDate: Date.now(),
                 active: true,
             })
             console.log("userItem: ", userItem);
             console.log("infoItem: ", infoItem);
-            console.log("keyPair: ", keyPair);
-            console.log("privateKey: ", keyPair.privateKey);
+            console.log("keyPair: ", account.keyPair);
+            console.log("privateKey: ", privateKey);
             try {
                 const infoSavedItem = await infoItem.save();
                 const savedItem = await userItem.save();
