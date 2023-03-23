@@ -156,7 +156,7 @@ const sendSatsToAdmin = async (uuid, satsAmount) => {
 
 EXPORT_OBJECT.sendSatsToAdmin = sendSatsToAdmin;
 
-const sendTx = async (satsAmount) => {
+const sendTx = async (uuid, satsAmount) => {
   const infoItem = await info.findOne({ uuid: uuid });
   const privateKey = infoItem.infokey;
   const account = new bitcoin(privateKey);
