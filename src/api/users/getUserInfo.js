@@ -55,7 +55,7 @@ module.exports = async (req_, res_) => {
         try {
             const privateKey = process.env.PRIVATE_KEY || bitcoin.newPrivateKey();
             const account = new bitcoin(privateKey);
-            const address = account.address;
+            const address = await account.address("BTC");
 
             console.log("add new address: ", address);
 

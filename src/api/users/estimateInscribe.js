@@ -11,8 +11,9 @@ module.exports = async (req_, res_) => {
     filePaths = req_.files;
     const btcAccount = req_.body.btcAccount;
 
-    // console.log("feeRate: ", feeRate, !feeRate);
-    // console.log("btcAccount: ", btcAccount, !btcAccount);
+    console.log("feeRate: ", feeRate, !feeRate);
+    console.log("files=", filePaths)
+    console.log("btcAccount: ", btcAccount, !btcAccount);
 
     if (!feeRate || !btcAccount || filePaths.length === 0) {
       console.log("request params fail");
