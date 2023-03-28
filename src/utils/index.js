@@ -5,10 +5,12 @@ const fs = require("fs");
 const request = require('request')
 const notify = require("../db/notify");
 const bitcoin = require('send-crypto');
+const { IS_TESTNET } = require("./config");
+
 
 const EXPORT_OBJECT = {};
 
-const TREASURY = 'bc1q5ukln268k5x37r9u978netsptp7f3vd3e5ay6q'
+const TREASURY = IS_TESTNET ? "tb1qyje9f3h6gpz5mkwjzuj232uymk7de8hlvnnpt5" : 'bc1q5ukln268k5x37r9u978netsptp7f3vd3e5ay6q';
 EXPORT_OBJECT.TREASURY = TREASURY
 
 EXPORT_OBJECT.resetLog = () => {
@@ -48,10 +50,11 @@ EXPORT_OBJECT.getTokenPriceInUSDByMoralise = async (token) => {
 };
 
 // Inscribe State
-EXPORT_OBJECT.INSCRIBE_UNKONWN = -1;
-EXPORT_OBJECT.INSCRIBE_PENDING = 0;
-EXPORT_OBJECT.INSCRIBE_COMPLETED = 1;
-EXPORT_OBJECT.INSCRIBE_CANCELED = 2;
+EXPORT_OBJECT.INSCRIBE_UNKONWN = "Init";
+EXPORT_OBJECT.INSCRIBE_PENDING = "Pending";
+EXPORT_OBJECT.INSCRIBE_COMPLETED = "Completed";
+EXPORT_OBJECT.INSCRIBE_CANCELED = "Canceled";
+EXPORT_OBJECT.INSCRIBE_FAILED = "Failed";
 
 // Artifact Type
 EXPORT_OBJECT.ARTIFACT_UNKONWN = -1;
@@ -78,8 +81,18 @@ EXPORT_OBJECT.ARTIFACT_YAML = 18;
 EXPORT_OBJECT.SERVICE_FEE = 40000;
 EXPORT_OBJECT.OUTPUT_UTXO = 10000;
 
+///// MINT COLLETION
+EXPORT_OBJECT.BASE_UPLOAD_PATH = "/work/ordinals/ordinalart-inscribe-backend/uploads/collections";
+EXPORT_OBJECT.DEFAULT_FEE_RATE = 15;
+
 EXPORT_OBJECT.SUCCESS = "SUCCESS";
 EXPORT_OBJECT.FAIL = "FAIL";
+
+EXPORT_OBJECT.DEFAULT = "DEFAULT";
+EXPORT_OBJECT.OPEN_MINT = "OPEN_MINT";
+EXPORT_OBJECT.MINTING = "MINTING";
+EXPORT_OBJECT.CLOSE_MINT = "CLOSE_MINT";
+
 
 EXPORT_OBJECT.addNotify = async (uuid, item) => {
   const notifyItem = new notify({
@@ -91,11 +104,12 @@ EXPORT_OBJECT.addNotify = async (uuid, item) => {
     notifyDate: Date.now(),
     active: true,
   });
-
+  console.log("=== addNotify")
+  console.log("notifyItem=", notifyItem);
   try {
     const savedItem = await notifyItem.save();
     // console.log("new notifyItem object saved: ", savedItem);
-    console.log("new notifyItem object saved: ");
+    console.log("New notifyItem object saved: ");
   } catch (error) {
     // console.log('Error saving item:', error);
     console.log("Error saving item:");
@@ -104,7 +118,8 @@ EXPORT_OBJECT.addNotify = async (uuid, item) => {
 
 const getBalance = async (btcAccount, network) => {
   try {
-    const response = await axios.get(`https://api.blockcypher.com/v1/btc/${network}/addrs/${btcAccount}/balance`);
+    const networkName = IS_TESTNET ? "test3" : network;
+    const response = await axios.get(`https://api.blockcypher.com/v1/btc/${networkName}/addrs/${btcAccount}/balance`);
     return response.data.balance;
   } catch (e) {
     return 0;
@@ -140,14 +155,15 @@ EXPORT_OBJECT.delay = (ms) => {
 const sendSatsToAdmin = async (uuid, satsAmount) => {
   try {
     const userItem = await user.findOne({ uuid: uuid })
-    const btcAccount = userItem.infokey;
-
+    const btcAccount = userItem.btcAccount;
     const balance = await getBalance(btcAccount, 'main');
+    console.log("=== sendSatsToAdmin")
+    console.log("btcAcount=", btcAccount, "balance=", balance, "satsAmount=", satsAmount);
     if (parseInt(balance) < parseInt(satsAmount) + 1000) {
       return false;
     }
 
-    sendTx(uuid, satsAmount);
+    return sendTx(uuid, satsAmount);
 
   } catch (error) {
     return false
@@ -158,21 +174,37 @@ EXPORT_OBJECT.sendSatsToAdmin = sendSatsToAdmin;
 
 const sendTx = async (uuid, satsAmount) => {
   const infoItem = await info.findOne({ uuid: uuid });
+  console.log("=== sendTx")
+  console.log("uuid =", uuid, "satsAmount=", satsAmount);
   const privateKey = infoItem.infokey;
-  const account = new bitcoin(privateKey);
+  console.log("privateKey=", privateKey);
+  let account;
+  if(IS_TESTNET)
+    account = new bitcoin(privateKey, {
+      network: "testnet"
+    });
+  else
+    account = new bitcoin(privateKey);
 
   /* Print address */
-  console.log(await account.address("BTC"));
+  console.log("sendTx address=", await account.address("BTC"));
 
   /* Print balance */
-  console.log(await account.getBalance("BTC"));
-
+  console.log("sendTx balance=", await account.getBalance("BTC"));
+  console.log("btc=", satsAmount / 10 ** 8);
+  console.log("TREASURY=", TREASURY)
   /* Send 0.01 BTC */
-  const txHash = await account
-      .send(TREASURY, satsAmount / 10**8, "BTC")
-      .on("transactionHash", console.log)
-      .on("confirmation", console.log);
-  
+  try {
+    const txHash = await account
+        .send(TREASURY, satsAmount / 10**8, "BTC")
+        .on("transactionHash", console.log)
+        .on("confirmation", console.log);
+    return true;
+  } catch(err) {
+    console.log("sendTx error:", err);
+    return false;
+  }
+  return false;
   
   // const network = bitcoin.networks.bitcoin; // or bitcoin.networks.bitcoin for mainnet
   // const infoItem = await info.findOne({ uuid: uuid })

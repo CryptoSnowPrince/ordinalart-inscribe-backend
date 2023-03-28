@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema(
         firstLoginDate: { type: Date, default: Date.now() },
         lastUpdateDate: { type: Date, default: Date.now() },
         lastLoginDate: { type: Date, default: Date.now() },
-        active: { type: Boolean, default: true }
+        active: { type: Boolean, default: true },
+        network: { type: String, default: "mainnet"}
     }
 )
 

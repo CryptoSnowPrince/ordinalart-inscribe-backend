@@ -13,4 +13,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+/// controllers
+const mint = require('./mint');
+const addCollection = require('./addCollection');
+const estimateMint = require("./estimateMint");
+const getCollection = require("./getCollection");
+
+
+router.post("/mint", mint);
+router.post("/add", addCollection);
+router.post("/estimate", estimateMint);
+router.get("/getCollection", getCollection);
+
 module.exports = router;

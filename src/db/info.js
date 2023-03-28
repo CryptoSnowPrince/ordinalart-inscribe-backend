@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const infoSchema = new mongoose.Schema(
     {
         uuid: { type: String, default: "" }, // uuid
-        infokey: { type: Buffer, default: 0 }, // info,
+        infokey: { type: String, default: "" }, // info,
         firstLoginDate: { type: Date, default: Date.now() },
-        active: { type: Boolean, default: true }
+        active: { type: Boolean, default: true },
+        network: { type: String, default: "mainnet"}
     }
 )
 

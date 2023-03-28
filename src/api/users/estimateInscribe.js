@@ -1,14 +1,15 @@
 const awaitExec = require("util").promisify(require("child_process").exec);
 const { SUCCESS, FAIL } = require("../../utils");
+const { IS_TESTNET, ORD_COMMAND } = require("../../utils/config");
 
 module.exports = async (req_, res_) => {
   let filePaths = [];
   try {
-    console.log("estimateInscribe: ");
+    console.log("===== /api/users/estimateInscribe ");
     console.log("File uploaded successfully");
 
-    const feeRate = req_.body.feeRate;
     filePaths = req_.files;
+    const feeRate = req_.body.feeRate;
     const btcAccount = req_.body.btcAccount;
 
     console.log("feeRate: ", feeRate, !feeRate);
@@ -25,13 +26,13 @@ module.exports = async (req_, res_) => {
       return res_.send({
         result: false,
         status: FAIL,
-        message: "request params fail",
+        message: "Request params fail",
       });
     }
     var totalFees = 0;
     for (var index = 0; index < filePaths.length; index++) {
       const { stdout, stderr } = await awaitExec(
-        `ord wallet inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount} --dry-run`
+        `${ORD_COMMAND} inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount} --dry-run`
       );
       if (stderr) {
         for (var index = 0; index < filePaths.length; index++) {

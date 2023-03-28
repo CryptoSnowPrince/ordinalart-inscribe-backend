@@ -3,34 +3,35 @@ const awaitExec = require("util").promisify(require("child_process").exec);
 const {
   SUCCESS,
   FAIL,
-  INSCRIBE_CREATED,
+  INSCRIBE_PENDING,
   OUTPUT_UTXO,
   SERVICE_FEE,
   addNotify,
   getDisplayString,
   timeEstimate,
   sendSatsToAdmin,
+  INSCRIBE_FAILED,
+  INSCRIBE_COMPLETED,
 } = require("../../utils");
+const { ORD_COMMAND, IS_TESTNET } = require("../../utils/config");
 
 module.exports = async (req_, res_) => {
   let filePaths = [];
   try {
-    // console.log("inscribe: ");
+    console.log("===== /api/users/inscribe");
+    console.log("File uploaded successfully");
     filePaths = req_.files;
-    // console.log("File uploaded successfully");
-    // console.log(file);
 
     const uuid = req_.body.uuid;
     const feeRate = req_.body.feeRate;
     const actionDate = req_.body.actionDate;
-    const btcDestination = req_.body.btcDestination;
-
-    // console.log("uuid: ", uuid, !uuid);
-    // console.log("feeRate: ", feeRate, !feeRate);
-    // console.log("actionDate: ", actionDate, !actionDate);
-    // console.log("btcDestination: ", btcDestination, !btcDestination);
-
-    if (!uuid || !feeRate || !actionDate || !btcDestination || filePaths.length === 0) {
+    const btcAccount = req_.body.recipient;
+    console.log("files=", filePaths);
+    console.log("uuid: ", uuid, !uuid);
+    console.log("feeRate: ", feeRate, !feeRate);
+    console.log("actionDate: ", actionDate, !actionDate);
+    console.log("btcAccount: ", btcAccount, !btcAccount);
+    if (!uuid || !feeRate || !actionDate || !btcAccount || filePaths.length === 0) {
       console.log("request params fail");
       if (filePaths.length > 0) {
         for (var index = 0; index < filePaths.length; index++) {
@@ -40,14 +41,14 @@ module.exports = async (req_, res_) => {
       return res_.send({
         result: false,
         status: FAIL,
-        message: "request params fail",
+        message: "Ruquest Params Failed.",
       });
     }
 
     var fees = 0;
     for (var index = 0; index < filePaths.length; index++) {
       const { stdout, stderr } = await awaitExec(
-        `ord wallet inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount} --dry-run`
+        `${ORD_COMMAND} inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount} --dry-run`
       );
       if (stderr) {
         for (var index = 0; index < filePaths.length; index++) {
@@ -56,14 +57,16 @@ module.exports = async (req_, res_) => {
         return res_.send({
           result: false,
           status: FAIL,
-          message: "estimateInscribe stderr",
+          message: "Estimate inscribe error. Please try again later.",
         });
       }
       fees += parseInt(JSON.parse(stdout).fees)
     }
+    console.log("fees=", fees);
 
     const estimateSatsAmount = fees + SERVICE_FEE + OUTPUT_UTXO * filePaths.length;
     const retVal = await sendSatsToAdmin(uuid, estimateSatsAmount);
+    console.log("sendSatsToAdmin: retVal=", retVal);
     if(!retVal) {
       for (var index = 0; index < filePaths.length; index++) {
         await awaitExec(`rm ${filePaths[index].path}`);
@@ -71,46 +74,74 @@ module.exports = async (req_, res_) => {
       return res_.send({
         result: false,
         status: FAIL,
-        message: "not enough sats",
+        message: "You don't have enough sats.",
       });
     }
-
+    console.log("=== start inscribing...")
     for (var index = 0; index < filePaths.length; index++) {
+      console.log(`Before start inscribing: path=${filePaths[index].path}`);
       const { stdout, stderr } = await awaitExec(
-        `ord wallet inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount}`
+        `${ORD_COMMAND} inscribe --fee-rate ${feeRate} ${filePaths[index].path} --destination ${btcAccount}`
       );
+      console.log("stdout=", stdout);
+      console.log("stderr=", stderr);
       if (stderr) {
+        // const fetchItem = await inscribe.updateOne({
+        //   _id: inscribeItem._id
+        // }, {
+        //   state: INSCRIBE_FAILED
+        // }, (err, docs) => {
+        //   if(err) {
+        //     console.log("UpdateOne Error: ", err);
+        //   } else {
+        //     console.log("Updated inscribe status to FAILED.");
+        //   }
+        // });
         for (var index = 0; index < filePaths.length; index++) {
           await awaitExec(`rm ${filePaths[index].path}`);
         }
         return res_.send({
           result: false,
           status: FAIL,
-          message: "inscribe stderr",
+          message: "Inscribe error",
         });
       }
 
-      const btcTxHash = JSON.parse(inscribeReturn.stdout).commit;
-      const inscriptionID = JSON.parse(inscribeReturn.stdout).inscription;
+      const btcTxHash = JSON.parse(stdout).commit;
+      const inscriptionID = JSON.parse(stdout).inscription;
+      console.log("btcTxHash=", btcTxHash, "inscriptionID=", inscriptionID);
 
+      // await awaitExec(`mv ${filePaths[index].path} ./minted`);
+      // console.log(`mv ${filePaths[index].path} ./minted`);
+      // const fetchItem = await inscribe.updateOne({
+      //   _id: inscribeItem._id
+      // }, {
+      //   state: INSCRIBE_COMPLETED
+      // }, (err, docs) => {
+      //   if(err) {
+      //     console.log("UpdateOne Error: ", err);
+      //   } else {
+      //     console.log("Updated inscribe status to Completed.");
+      //   }
+      // });
       const inscribeItem = new inscribe({
         uuid: uuid,
         feeRate: feeRate,
-        btcDestination: btcDestination,
-        state: INSCRIBE_CREATED,
+        btcDestination: btcAccount,
+        state: INSCRIBE_COMPLETED,
         actionDate: actionDate,
-        inscriptionID: inscriptionID,
+        path: filePaths[index].path,
         txHash: btcTxHash,
+        inscriptionID: inscriptionID
       });
       const savedItem = await inscribeItem.save();
-      // console.log("new inscribeItem object saved: ", savedItem);
-      console.log("new inscribeItem object saved: ");
 
+      console.log("addNotify");
       await addNotify(uuid, {
         type: 0,
         title: "Inscribe Success!",
-        link: `https://mempool.space/tx/${btcTxHash}`,
-        content: `Congratulation! Your inscription ${getDisplayString(
+        link: `https://mempool.space/${IS_TESTNET?"testnet/":""}tx/${btcTxHash}`,
+        content: `Congratulations! Your inscription ${getDisplayString(
           inscriptionID
         )} will arrive to your wallet in ${timeEstimate(feeRate)}.`,
       });
@@ -122,7 +153,7 @@ module.exports = async (req_, res_) => {
     return res_.send({
       result: true,
       status: SUCCESS,
-      message: message,
+      message: "Inscribed successfully",
     });
   } catch (error) {
     console.log("inscribe catch error: ", error);
@@ -133,6 +164,6 @@ module.exports = async (req_, res_) => {
         } catch (error) { }
       }
     }
-    return res_.send({ result: false, status: FAIL, message: "Catch Error" });
+    return res_.send({ result: false, status: FAIL, message: "Unexpected error. Please try again later." });
   }
 };
