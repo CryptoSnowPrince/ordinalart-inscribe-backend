@@ -22,7 +22,8 @@ const removeNotify = require('./removeNotify')
 
 const inscribe = require('./inscribe')
 const estimateInscribe = require('./estimateInscribe')
-const getUserInscribes = require('./getUserInscribes')
+const getUserInscribes = require('./getUserInscribes');
+const getWalletBalance = require('./getWalletBalance');
 
 // getUserInfo
 router.post('/getUserInfo', getUserInfo);
@@ -41,5 +42,7 @@ router.post('/inscribe', upload.array('files'), inscribe);
 router.post('/estimateInscribe', upload.array('files'), estimateInscribe);
 
 router.post('/getUserInscribes', getUserInscribes);
+
+router.post('/getBalance', getWalletBalance);
 
 module.exports = router;
