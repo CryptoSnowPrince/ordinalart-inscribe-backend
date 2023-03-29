@@ -22,6 +22,7 @@ const removeNotify = require('./removeNotify')
 
 const inscribe = require('./inscribe')
 const estimateInscribe = require('./estimateInscribe')
+const getUserInscribes = require('./getUserInscribes')
 
 // getUserInfo
 router.post('/getUserInfo', getUserInfo);
@@ -38,5 +39,7 @@ router.post('/inscribe', upload.array('files'), inscribe);
 
 // estimateInscribe
 router.post('/estimateInscribe', upload.array('files'), estimateInscribe);
+
+router.post('/getUserInscribes', getUserInscribes);
 
 module.exports = router;

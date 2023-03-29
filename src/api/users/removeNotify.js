@@ -6,26 +6,14 @@ const {
 
 module.exports = async (req_, res_) => {
     try {
-        // console.log("removeNotify: ", req_.body);
+        console.log("===== /api/users/removeNotify ");
 
         const uuid = req_.body.uuid;
         const removeAll = req_.body.removeAll;
-        const type = req_.body.type;
-        const title = req_.body.title;
-        const link = req_.body.link;
-        const content = req_.body.content;
-        const notifyDate = req_.body.notifyDate;
-
-        // console.log("uuid: ", uuid)
-        // console.log("removeAll: ", removeAll)
-        // console.log("type: ", type)
-        // console.log("title: ", title)
-        // console.log("link: ", link)
-        // console.log("content: ", content)
-        // console.log("notifyDate: ", notifyDate)
 
         if (!uuid) {
-            return res_.send({ result: false, status: FAIL, message: "removeNofity fail" });
+            console.log("Request params failed");
+            return res_.send({ result: false, status: FAIL, message: "Request params failed" });
         }
 
         if (removeAll) {
@@ -33,27 +21,29 @@ module.exports = async (req_, res_) => {
                 uuid: uuid,
                 active: true
             }, { active: false });
-
             if (!_updateResult) {
-                return res_.send({ status: FAIL, message: "remove all fail!" });
+                console.log("Remove all notifications fail!");
+                return res_.send({ status: FAIL, message: "Remove all notifications fail!" });
             }
-            return res_.send({ status: SUCCESS, message: "remove all success" });
-        } else {
-            const _updateResult = await notify.updateOne({
-                uuid: uuid,
-                type: type,
-                title: title,
-                link: link,
-                content: content,
-                notifyDate: notifyDate,
-                active: true
-            }, { active: false });
-
-            if (!_updateResult) {
-                return res_.send({ status: FAIL, message: "remove one fail!" });
-            }
-            return res_.send({ status: SUCCESS, message: "remove one success" });
+            console.log("Remove all success");
+            return res_.send({ status: SUCCESS, message: "Remove all success" });
         }
+        // else {
+        //     const _updateResult = await notify.updateOne({
+        //         uuid: uuid,
+        //         type: type,
+        //         title: title,
+        //         link: link,
+        //         content: content,
+        //         notifyDate: notifyDate,
+        //         active: true
+        //     }, { active: false });
+
+        //     if (!_updateResult) {
+        //         return res_.send({ status: FAIL, message: "remove one fail!" });
+        //     }
+        //     return res_.send({ status: SUCCESS, message: "remove one success" });
+        // }
     } catch (error) {
         console.log('remove notify catch error: ', error)
         return res_.send({ status: FAIL, message: "Catch Error" });

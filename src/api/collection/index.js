@@ -18,11 +18,13 @@ const mint = require('./mint');
 const addCollection = require('./addCollection');
 const estimateMint = require("./estimateMint");
 const getCollection = require("./getCollection");
+const getInscribes = require("./getInscribes");
 
 
 router.post("/mint", mint);
 router.post("/add", addCollection);
 router.post("/estimate", estimateMint);
 router.get("/getCollection", getCollection);
+router.get("/getInscribes", getInscribes);
 
 module.exports = router;
