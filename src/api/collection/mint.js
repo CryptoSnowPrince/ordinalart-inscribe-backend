@@ -15,7 +15,8 @@ const {
     CLOSE_MINT,
     addNotify,
     getDisplayString,
-    timeEstimate
+    timeEstimate,
+    INSCRIBE_COMPLETED
 } = require("../../utils");
 const { ORD_COMMAND, IS_TESTNET } = require("../../utils/config");
 
@@ -60,6 +61,7 @@ module.exports = async (req, res) => {
     console.log("filePaths=", filePaths);
 
     let fetchMintItem = await mintDb.findOne({uuid, collectionId});
+    console.log("fetchMintItem=", fetchMintItem)
     if(fetchMintItem === null) {
         fetchMintItem = new mintDb({
             collectionId,
@@ -69,6 +71,7 @@ module.exports = async (req, res) => {
             pending: OPEN_MINT
         });
         await fetchMintItem.save();
+        fetchMintItem = await mintDb.findOne({uuid, collectionId});
     }
     try {
         let fees = 0;
@@ -118,7 +121,7 @@ module.exports = async (req, res) => {
                     message: "Mint: ord wallet inscribe stderr"
                 })
             }
-            await awaitExec(`mv ${filePaths[i]} ./minted`);
+            // await awaitExec(`mv ${filePaths[i]} ./minted`);
 
             const btcTxHash = JSON.parse(stdout).commit;
             const inscriptionID = JSON.parse(stdout).inscription;
@@ -131,7 +134,6 @@ module.exports = async (req, res) => {
                 feeRate: feeRate,
                 btcDestination: btcAccount,
                 state: INSCRIBE_COMPLETED,
-                actionDate: actionDate,
                 path: filePaths[i],
                 txHash: btcTxHash,
                 inscriptionID: inscriptionID
@@ -159,7 +161,7 @@ module.exports = async (req, res) => {
             message: "Minted successfully"
         })
     } catch (err) {
-        console.log("EstimateInscribe catch error:", err);
+        console.log("Mint catch error:", err);
         return res.send({ result: false, status: FAIL, message: "Mint error with exception" });
     }
 }
