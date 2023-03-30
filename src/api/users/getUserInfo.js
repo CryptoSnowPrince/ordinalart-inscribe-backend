@@ -21,7 +21,7 @@ module.exports = async (req_, res_) => {
 
     if (!uuid || !validate(uuid) || !actionDate) {
         console.log("null: ", (!uuid || !validate(uuid) || !actionDate));
-        return res_.send({ result: false, status: FAIL, message: "uuid fail" });
+        return res_.send({ result: false, status: FAIL, message: "Request params fail" });
     }
 
     const fetchItem = await user.findOne({ uuid: uuid });
