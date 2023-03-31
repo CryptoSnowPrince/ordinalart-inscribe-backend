@@ -20,7 +20,7 @@ name: string
 avatar: number
 background: number
 actionDate: date
-
+ 
 POST
 https://inscribe.ordinal.art/api/users/getUserInscriptions
 btcAccount: string
