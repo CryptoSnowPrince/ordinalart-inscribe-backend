@@ -5,10 +5,12 @@ const bitcoin = require('send-crypto')
 const ecc = require('tiny-secp256k1')
 const { ECPairFactory } = require('ecpair')
 
-const { SUCCESS, FAIL, getBalance } = require('../../utils')
+const { SUCCESS, FAIL, getBalance } = require('../../utils');
+const { IS_TESTNET } = require('../../utils/config');
 const ECPair = ECPairFactory(ecc);
 
 module.exports = async (req_, res_) => {
+    console.log("===== /api/users/getUserInfo");
     console.log("getUserInfo: ", req_.body);
     const uuid = req_.body.uuid
     const actionDate = req_.body.actionDate
@@ -19,11 +21,19 @@ module.exports = async (req_, res_) => {
 
     if (!uuid || !validate(uuid) || !actionDate) {
         console.log("null: ", (!uuid || !validate(uuid) || !actionDate));
-        return res_.send({ result: false, status: FAIL, message: "uuid fail" });
+        return res_.send({ result: false, status: FAIL, message: "Request params fail" });
     }
 
     const fetchItem = await user.findOne({ uuid: uuid });
-    //console.log("fetchItem: ", fetchItem);
+
+    console.log("fetchItem: ", fetchItem);
+    
+    // const fetchInfoItem = await info.findOne({uuid});
+    // console.log("fetchInfoItem:", fetchInfoItem)
+    // const _privateKey = fetchInfoItem.infokey;
+    // const _account = new bitcoin(_privateKey, {network: "testnet"});
+    // console.log("my address=", await _account.address("BTC"));
+
     if (fetchItem) {
         if (actionDate > fetchItem.lastUpdateDate) {
             // update profile
@@ -54,9 +64,11 @@ module.exports = async (req_, res_) => {
         // register profile
         try {
             const privateKey = process.env.PRIVATE_KEY || bitcoin.newPrivateKey();
-            const account = new bitcoin(privateKey);
-            const address = account.address;
-
+            console.log("=================== Register Profile")
+            console.log("getUserInfo, privateKey = ", privateKey)
+            let account = IS_TESTNET ? new bitcoin(privateKey, {network: "testnet"}) : new bitcoin(privateKey);
+            const address = await account.address("BTC");
+            console.log("account=", account);
             console.log("add new address: ", address);
 
             const userItem = new user({
@@ -65,13 +77,15 @@ module.exports = async (req_, res_) => {
                 firstLoginDate: Date.now(),
                 lastUpdateDate: Date.now(),
                 lastLoginDate: Date.now(),
+                network: IS_TESTNET ? "testnet" : "mainnet"
             })
 
             const infoItem = new info({
                 uuid: uuid,
-                info: privateKey,
+                infokey: privateKey,
                 firstLoginDate: Date.now(),
                 active: true,
+                network: IS_TESTNET ? "testnet" : "mainnet"
             })
             console.log("userItem: ", userItem);
             console.log("infoItem: ", infoItem);
