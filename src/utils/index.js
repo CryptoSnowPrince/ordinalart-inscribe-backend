@@ -5,12 +5,11 @@ const fs = require("fs");
 const request = require('request')
 const notify = require("../db/notify");
 const bitcoin = require('send-crypto');
-const { IS_TESTNET } = require("./config");
+const { IS_TESTNET, TREASURY } = require("./config");
 
 
 const EXPORT_OBJECT = {};
 
-const TREASURY = IS_TESTNET ? "tb1qyje9f3h6gpz5mkwjzuj232uymk7de8hlvnnpt5" : 'bc1q5ukln268k5x37r9u978netsptp7f3vd3e5ay6q';
 EXPORT_OBJECT.TREASURY = TREASURY
 
 EXPORT_OBJECT.resetLog = () => {
