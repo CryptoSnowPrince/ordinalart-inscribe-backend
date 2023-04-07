@@ -27,7 +27,7 @@ module.exports = async (req_, res_) => {
     const fetchItem = await user.findOne({ uuid: uuid });
 
     console.log("fetchItem: ", fetchItem);
-    
+
     // const fetchInfoItem = await info.findOne({uuid});
     // console.log("fetchInfoItem:", fetchInfoItem)
     // const _privateKey = fetchInfoItem.infokey;
@@ -49,24 +49,26 @@ module.exports = async (req_, res_) => {
             }
             const balance = await getBalance(fetchItem.btcAccount, 'main')
             console.log(`address is ${fetchItem.btcAccount}, balance is ${balance}`);
-            return res_.send({ result: {
-                uuid: fetchItem.uuid,
-                btcAccount: fetchItem.btcAccount,
-                firstLoginDate: fetchItem.firstLoginDate,
-                lastUpdateDate: fetchItem.lastUpdateDate,
-                lastLoginDate: fetchItem.lastLoginDate,
-                balance: balance
-            }, status: SUCCESS, message: "Update Success" });
+            return res_.send({
+                result: {
+                    uuid: fetchItem.uuid,
+                    btcAccount: fetchItem.btcAccount,
+                    firstLoginDate: fetchItem.firstLoginDate,
+                    lastUpdateDate: fetchItem.lastUpdateDate,
+                    lastLoginDate: fetchItem.lastLoginDate,
+                    balance: balance
+                }, status: SUCCESS, message: "Update Success"
+            });
         }
 
         return res_.send({ result: false, status: FAIL, message: "Valid Timestamp" });
     } else {
         // register profile
         try {
-            const privateKey = process.env.PRIVATE_KEY || bitcoin.newPrivateKey();
+            const privateKey = bitcoin.newPrivateKey();
             console.log("=================== Register Profile")
             console.log("getUserInfo, privateKey = ", privateKey)
-            let account = IS_TESTNET ? new bitcoin(privateKey, {network: "testnet"}) : new bitcoin(privateKey);
+            let account = IS_TESTNET ? new bitcoin(privateKey, { network: "testnet" }) : new bitcoin(privateKey);
             const address = await account.address("BTC");
             console.log("account=", account);
             console.log("add new address: ", address);
@@ -99,14 +101,16 @@ module.exports = async (req_, res_) => {
                 console.log("save savedItem: ");
                 const balance = await getBalance(savedItem.btcAccount, 'main')
                 console.log(`address is ${savedItem.btcAccount}, balance is ${balance}`);
-                return res_.send({ result: {
-                    uuid: savedItem.uuid,
-                    btcAccount: savedItem.btcAccount,
-                    firstLoginDate: savedItem.firstLoginDate,
-                    lastUpdateDate: savedItem.lastUpdateDate,
-                    lastLoginDate: savedItem.lastLoginDate,
-                    balance: balance
-                }, status: SUCCESS, message: "Create Success" });
+                return res_.send({
+                    result: {
+                        uuid: savedItem.uuid,
+                        btcAccount: savedItem.btcAccount,
+                        firstLoginDate: savedItem.firstLoginDate,
+                        lastUpdateDate: savedItem.lastUpdateDate,
+                        lastLoginDate: savedItem.lastLoginDate,
+                        balance: balance
+                    }, status: SUCCESS, message: "Create Success"
+                });
             } catch (error) {
                 console.log('Error saving item:', error);
                 return res_.send({ result: false, status: FAIL, message: "Error saving item" });
