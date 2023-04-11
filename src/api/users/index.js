@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { ORD_PATH } = require('../../utils')
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '/work/ordinals/ordinalart-inscribe-backend/uploads');
+        cb(null, `${ORD_PATH}/uploads`);
     },
     filename: function (req, file, cb) {
         cb(null, `${file.originalname}`);

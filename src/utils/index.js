@@ -5,11 +5,12 @@ const fs = require("fs");
 const request = require('request')
 const notify = require("../db/notify");
 const bitcoin = require('send-crypto');
-const { IS_TESTNET, TREASURY } = require("./config");
+const { IS_TESTNET, TREASURY, ORD_PATH } = require("./config");
 
 
 const EXPORT_OBJECT = {};
 
+EXPORT_OBJECT.ORD_PATH = ORD_PATH
 EXPORT_OBJECT.TREASURY = TREASURY
 
 EXPORT_OBJECT.resetLog = () => {
@@ -81,7 +82,7 @@ EXPORT_OBJECT.SERVICE_FEE = 0;
 EXPORT_OBJECT.OUTPUT_UTXO = 10000;
 
 ///// MINT COLLETION
-EXPORT_OBJECT.BASE_UPLOAD_PATH = "/work/ordinals/ordinalart-inscribe-backend/uploads/collections";
+EXPORT_OBJECT.BASE_UPLOAD_PATH = `${ORD_PATH}/uploads/collections`;
 EXPORT_OBJECT.DEFAULT_FEE_RATE = 15;
 
 EXPORT_OBJECT.SUCCESS = "SUCCESS";
