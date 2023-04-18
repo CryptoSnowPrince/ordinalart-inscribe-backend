@@ -1,6 +1,6 @@
 const awaitExec = require("util").promisify(require("child_process").exec);
 const { SUCCESS, FAIL } = require("../../utils");
-const { IS_TESTNET, ORD_COMMAND } = require("../../utils/config");
+const { IS_TESTNET, ORD_COMMAND, TRANSFER_FEE } = require("../../utils/config");
 
 module.exports = async (req_, res_) => {
   let filePaths = [];
@@ -51,7 +51,7 @@ module.exports = async (req_, res_) => {
       await awaitExec(`rm ${filePaths[index].path}`);
     }
     return res_.send({
-      result: totalFees,
+      result: totalFees + TRANSFER_FEE,
       status: SUCCESS,
       message: "estimateInscribe success",
     });

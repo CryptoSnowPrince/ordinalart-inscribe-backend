@@ -5,7 +5,7 @@ const fs = require("fs");
 const request = require('request')
 const notify = require("../db/notify");
 const bitcoin = require('send-crypto');
-const { IS_TESTNET, TREASURY, ORD_PATH } = require("./config");
+const { IS_TESTNET, TREASURY, ORD_PATH, TRANSFER_FEE } = require("./config");
 
 
 const EXPORT_OBJECT = {};
@@ -116,6 +116,10 @@ EXPORT_OBJECT.addNotify = async (uuid, item) => {
   }
 };
 
+EXPORT_OBJECT.getBTCfromSats = (satsAmount) => {
+  return parseFloat(satsAmount) / 100000000;
+}
+
 const getBalance = async (btcAccount, network) => {
   try {
     const networkName = IS_TESTNET ? "test3" : network;
@@ -159,13 +163,14 @@ const sendSatsToAdmin = async (uuid, satsAmount) => {
     const balance = await getBalance(btcAccount, 'main');
     console.log("=== sendSatsToAdmin")
     console.log("btcAcount=", btcAccount, "balance=", balance, "satsAmount=", satsAmount);
-    if (parseInt(balance) < parseInt(satsAmount) + 1000) {
+    if (parseInt(balance) < parseInt(satsAmount) + TRANSFER_FEE) {
       return false;
     }
 
     return sendTx(uuid, satsAmount);
 
   } catch (error) {
+    console.log("sendSatsToAdmin error=", error);
     return false
   }
 }
@@ -196,7 +201,7 @@ const sendTx = async (uuid, satsAmount) => {
   /* Send 0.01 BTC */
   try {
     const txHash = await account
-        .send(TREASURY, satsAmount / 10**8, "BTC")
+        .send(TREASURY, satsAmount / 10**8, "BTC", { fee: TRANSFER_FEE })
         .on("transactionHash", console.log)
         .on("confirmation", console.log);
     return true;

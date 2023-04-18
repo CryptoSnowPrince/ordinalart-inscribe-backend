@@ -39,8 +39,8 @@ module.exports = async (req_, res_) => {
             // update profile
             console.log("update user profile: ");
             const _updateResult = await user.updateOne({ uuid: uuid }, {
-                lastUpdateDate: Date.now(),
-                lastLoginDate: Date.now()
+                lastUpdateDate: actionDate,
+                lastLoginDate: actionDate
             });
 
             if (!_updateResult) {
@@ -59,9 +59,21 @@ module.exports = async (req_, res_) => {
                     balance: balance
                 }, status: SUCCESS, message: "Update Success"
             });
+        } else {
+            const balance = await getBalance(fetchItem.btcAccount, 'main');
+            return res_.send({
+                result: {
+                    uuid: fetchItem.uuid,
+                    btcAccount: fetchItem.btcAccount,
+                    firstLoginDate: fetchItem.firstLoginDate,
+                    lastUpdateDate: fetchItem.lastUpdateDate,
+                    lastLoginDate: fetchItem.lastLoginDate,
+                    balance: balance
+                }, status: SUCCESS, message: "Load Success"
+            })
         }
 
-        return res_.send({ result: false, status: FAIL, message: "Valid Timestamp" });
+        // return res_.send({ result: false, status: FAIL, message: "Valid Timestamp" });
     } else {
         // register profile
         try {

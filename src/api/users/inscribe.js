@@ -12,8 +12,9 @@ const {
   sendSatsToAdmin,
   INSCRIBE_FAILED,
   INSCRIBE_COMPLETED,
+  getBTCfromSats,
 } = require("../../utils");
-const { ORD_COMMAND, IS_TESTNET } = require("../../utils/config");
+const { ORD_COMMAND, IS_TESTNET, TRANSFER_FEE } = require("../../utils/config");
 
 module.exports = async (req_, res_) => {
   let filePaths = [];
@@ -74,7 +75,7 @@ module.exports = async (req_, res_) => {
       return res_.send({
         result: false,
         status: FAIL,
-        message: "You don't have enough sats.",
+        message: `You don't have enough sats. Please check your balance in Profile page. You need at least ${getBTCfromSats(estimateSatsAmount + TRANSFER_FEE)} BTC.`,
       });
     }
     console.log("=== start inscribing...")
@@ -103,7 +104,7 @@ module.exports = async (req_, res_) => {
         return res_.send({
           result: false,
           status: FAIL,
-          message: "Inscribe error",
+          message: "Inscribe error. Please try again later. Or contact with the support team.",
         });
       }
 
@@ -164,6 +165,6 @@ module.exports = async (req_, res_) => {
         } catch (error) { }
       }
     }
-    return res_.send({ result: false, status: FAIL, message: "Unexpected error. Please try again later." });
+    return res_.send({ result: false, status: FAIL, message: "Unexpected error. Please try again later. Or contact with the support team." });
   }
 };
