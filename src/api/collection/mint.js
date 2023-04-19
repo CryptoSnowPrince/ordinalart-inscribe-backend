@@ -16,9 +16,10 @@ const {
     addNotify,
     getDisplayString,
     timeEstimate,
-    INSCRIBE_COMPLETED
+    INSCRIBE_COMPLETED,
+    getBTCfromSats
 } = require("../../utils");
-const { ORD_COMMAND, IS_TESTNET } = require("../../utils/config");
+const { ORD_COMMAND, IS_TESTNET, TRANSFER_FEE } = require("../../utils/config");
 
 module.exports = async (req, res) => {
     const uuid = req.body.uuid;
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
             return res.send({
                 result: false,
                 status: FAIL,
-                message: "Not enough sats"
+                message: `You don't have enough sats. Please check your balance in Profile page. You need at least ${getBTCfromSats(estimateSatsAmount + TRANSFER_FEE)} BTC.`,
             });
         }
         let mintedCount = 0;

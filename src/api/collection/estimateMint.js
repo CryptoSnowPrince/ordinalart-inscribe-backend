@@ -1,7 +1,7 @@
 const collectionDb = require("../../db/collections");
 const awaitExec = require("util").promisify(require("child_process").exec);
 const { SUCCESS, FAIL, BASE_UPLOAD_PATH } = require("../../utils");
-const { ORD_COMMAND } = require("../../utils/config");
+const { ORD_COMMAND, TRANSFER_FEE } = require("../../utils/config");
 
 module.exports = async (req_, res_) => {
   let filePaths = [];
@@ -56,7 +56,7 @@ module.exports = async (req_, res_) => {
     }
 
     return res_.send({
-      result: totalFees,
+      result: totalFees + TRANSFER_FEE,
       status: SUCCESS,
       message: "estimateMint success",
     });

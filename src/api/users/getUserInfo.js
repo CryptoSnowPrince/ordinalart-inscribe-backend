@@ -47,8 +47,6 @@ module.exports = async (req_, res_) => {
                 console.log("updateOne fail!", _updateResult);
                 return res_.send({ result: false, status: FAIL, message: "Update Fail" });
             }
-            const balance = await getBalance(fetchItem.btcAccount, 'main')
-            console.log(`address is ${fetchItem.btcAccount}, balance is ${balance}`);
             return res_.send({
                 result: {
                     uuid: fetchItem.uuid,
@@ -56,11 +54,10 @@ module.exports = async (req_, res_) => {
                     firstLoginDate: fetchItem.firstLoginDate,
                     lastUpdateDate: fetchItem.lastUpdateDate,
                     lastLoginDate: fetchItem.lastLoginDate,
-                    balance: balance
+                    balance: fetchItem.btcBalance,
                 }, status: SUCCESS, message: "Update Success"
             });
         } else {
-            const balance = await getBalance(fetchItem.btcAccount, 'main');
             return res_.send({
                 result: {
                     uuid: fetchItem.uuid,
@@ -68,7 +65,7 @@ module.exports = async (req_, res_) => {
                     firstLoginDate: fetchItem.firstLoginDate,
                     lastUpdateDate: fetchItem.lastUpdateDate,
                     lastLoginDate: fetchItem.lastLoginDate,
-                    balance: balance
+                    balance: fetchItem.btcBalance,
                 }, status: SUCCESS, message: "Load Success"
             })
         }
@@ -84,10 +81,12 @@ module.exports = async (req_, res_) => {
             const address = await account.address("BTC");
             console.log("account=", account);
             console.log("add new address: ", address);
+            const balance = await getBalance(address, 'main')
 
             const userItem = new user({
                 uuid: uuid,
                 btcAccount: address,
+                btcBalance: parseInt(balance),
                 firstLoginDate: Date.now(),
                 lastUpdateDate: Date.now(),
                 lastLoginDate: Date.now(),
@@ -111,8 +110,6 @@ module.exports = async (req_, res_) => {
                 console.log(`address is ${savedItem.btcAccount}`);
                 // console.log("save savedItem: ", savedItem);
                 console.log("save savedItem: ");
-                const balance = await getBalance(savedItem.btcAccount, 'main')
-                console.log(`address is ${savedItem.btcAccount}, balance is ${balance}`);
                 return res_.send({
                     result: {
                         uuid: savedItem.uuid,
@@ -120,7 +117,7 @@ module.exports = async (req_, res_) => {
                         firstLoginDate: savedItem.firstLoginDate,
                         lastUpdateDate: savedItem.lastUpdateDate,
                         lastLoginDate: savedItem.lastLoginDate,
-                        balance: balance
+                        balance: savedItem.btcBalance,
                     }, status: SUCCESS, message: "Create Success"
                 });
             } catch (error) {
