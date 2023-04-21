@@ -36,7 +36,7 @@ module.exports = async (req_, res_) => {
       console.log("request params fail");
       if (filePaths.length > 0) {
         for (var index = 0; index < filePaths.length; index++) {
-          await awaitExec(`rm ${filePaths[index].path}`);
+          await awaitExec(`rm "${filePaths[index].path}"`);
         }
       }
       return res_.send({
@@ -53,7 +53,7 @@ module.exports = async (req_, res_) => {
       );
       if (stderr) {
         for (var index = 0; index < filePaths.length; index++) {
-          await awaitExec(`rm ${filePaths[index].path}`);
+          await awaitExec(`rm "${filePaths[index].path}"`);
         }
         return res_.send({
           result: false,
@@ -70,7 +70,7 @@ module.exports = async (req_, res_) => {
     console.log("sendSatsToAdmin: retVal=", retVal);
     if(!retVal) {
       for (var index = 0; index < filePaths.length; index++) {
-        await awaitExec(`rm ${filePaths[index].path}`);
+        await awaitExec(`rm "${filePaths[index].path}"`);
       }
       return res_.send({
         result: false,
@@ -99,7 +99,7 @@ module.exports = async (req_, res_) => {
         //   }
         // });
         for (var index = 0; index < filePaths.length; index++) {
-          await awaitExec(`rm ${filePaths[index].path}`);
+          await awaitExec(`rm "${filePaths[index].path}"`);
         }
         return res_.send({
           result: false,
@@ -149,7 +149,7 @@ module.exports = async (req_, res_) => {
     }
 
     for (var index = 0; index < filePaths.length; index++) {
-      await awaitExec(`rm ${filePaths[index].path}`);
+      await awaitExec(`rm "${filePaths[index].path}"`);
     }
     return res_.send({
       result: true,
@@ -161,7 +161,7 @@ module.exports = async (req_, res_) => {
     if (filePaths.length > 0) {
       for (var index = 0; index < filePaths.length; index++) {
         try {
-          await awaitExec(`rm ${filePaths[index].path}`);
+          await awaitExec(`rm "${filePaths[index].path}"`);
         } catch (error) { }
       }
     }

@@ -10,7 +10,7 @@ EXPORT_OBJECT.EXPLORER_URL = EXPLORER_URL;
 
 const ORD_PATH = '/work/inscribe.ordinal.art/ordinalart-inscribe-backend';
 const ORD_COMMAND = IS_TESTNET ? "ord -t --cookie-file /work/blockchain-node/bitcoin/testnet/testnet3/.cookie wallet": "ord wallet";
-const MAINNET_TREASURY = 'bc1qakj552djms5p7gr3edp8we6rqaqqej970a2sal'
+const MAINNET_TREASURY = 'bc1qcaxtxaek9c40ejszgk0j200z2204pq7eap64s9'
 const TREASURY = IS_TESTNET ? "tb1qyje9f3h6gpz5mkwjzuj232uymk7de8hlvnnpt5" : MAINNET_TREASURY;
 
 const TRANSFER_FEE = 5000;
